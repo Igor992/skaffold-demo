@@ -1,0 +1,4 @@
+# Exclude custom files
+*.DS_Store
+*.tls/_*
+*.vscode
