@@ -1,0 +1,125 @@
+apiVersion: skaffold/v3
+kind: Config
+metadata:
+  name: helm
+profiles:
+- name: local-develop
+  activation:
+    - kubeContext: kind-develop
+      command: dev
+  requiresAllActivations: true
+  build:
+    artifacts:
+      - image: <registry>/result
+        context: result
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+      - image: <registry>/vote
+        context: vote
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+        sync:
+          infer:
+            - "**/*.py"
+      - image: <registry>/worker
+        context: worker
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+    tagPolicy:
+      envTemplate:
+        template: "{{.IMAGE_TAG}}"
+    platforms:
+      - "linux/arm64"
+    local:
+      push: false
+      useBuildkit: true
+      concurrency: 3
+  deploy:
+    helm:
+      releases:
+        - name: dev
+          chartPath: ../helm
+          namespace: dev
+          createNamespace: true
+          setValueTemplates:
+            result.image.repository: "{{.IMAGE_REPO_<registry>_result}}"
+            result.image.tag: "{{.IMAGE_TAG_<registry>_result}}@{{.IMAGE_DIGEST_<registry>_result}}"
+            result.image.pullPolicy: IfNotPresent
+            vote.image.repository: "{{.IMAGE_REPO_<registry>_vote}}"
+            vote.image.tag: "{{.IMAGE_TAG_<registry>_vote}}@{{.IMAGE_DIGEST_<registry>_vote}}"
+            vote.image.pullPolicy: IfNotPresent
+            worker.image.repository: "{{.IMAGE_REPO_<registry>_worker}}"
+            worker.image.tag: "{{.IMAGE_TAG_<registry>_worker}}@{{.IMAGE_DIGEST_<registry>_worker}}"
+            worker.image.pullPolicy: IfNotPresent
+          wait: true
+          skipBuildDependencies: true
+    statusCheck: true
+    statusCheckDeadlineSeconds: 120
+    logs:
+      prefix: podAndContainer
+  portForward:
+    - resourceType: service
+      resourceName: db
+      port: 5432
+      localPort: 5432
+    - resourceType: service
+      resourceName: redis
+      port: 6379
+      localPort: 6379
+
+- name: vote-images
+  activation:
+    - kubeContext: kind-develop
+      command: build
+  requiresAllActivations: true
+  build:
+    artifacts:
+      - image: <registry>/result
+        context: result
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+      - image: <registry>/vote
+        context: vote
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+      - image: <registry>/worker
+        context: worker
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+    tagPolicy:
+      envTemplate:
+        template: "{{.IMAGE_TAG}}"
+    platforms:
+      - "linux/arm64"
+    local:
+      push: false
+      useBuildkit: true
+      concurrency: 3
+
+- name: seed-image
+  activation:
+    - kubeContext: kind-develop
+      command: build
+  requiresAllActivations: true
+  build:
+    artifacts:
+      - image: <registry>/seed-data
+        context: seed-data
+        docker:
+          dockerfile: Dockerfile
+          noCache: true
+    tagPolicy:
+      envTemplate:
+        template: "{{.IMAGE_TAG}}"
+    platforms:
+      - "linux/arm64"
+    local:
+      push: false
+      useBuildkit: true
+      concurrency: 1

@@ -1,0 +1,101 @@
+version: "3.8"
+services:
+  vote:
+    container_name: vote
+    build: ./vote
+    command: python app.py
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+     - ./vote:/app
+    ports:
+      - "5000:80"
+    networks:
+      - front
+      - back
+
+  result:
+    container_name: result
+    build: ./result
+    entrypoint: nodemon server.js
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./result:/app
+    ports:
+      - "5001:80"
+    networks:
+      - front
+      - back
+
+  worker:
+    container_name: worker
+    build:
+      context: ./worker
+    depends_on:
+      redis:
+        condition: service_healthy 
+      db:
+        condition: service_healthy 
+    networks:
+      - back
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    volumes:
+      - "./healthchecks:/healthchecks"
+    healthcheck:
+      test: /healthchecks/redis.sh
+      interval: "5s"
+    networks:
+      - back
+
+  db:
+    container_name: postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - "data:/var/lib/postgresql/data"
+      - "dshm:/dev/shm"
+      - "./healthchecks:/healthchecks"
+    healthcheck:
+      test: /healthchecks/postgres.sh
+      interval: "5s"
+    networks:
+      - back
+
+  # this service runs once to seed the database with votes
+  # it won't run unless you specify the "seed" profile
+
+  # docker compose --profile seed up
+
+  # this won't work as seed has been changed for helm usage
+  # to use this with compose rename at script service name into http://vote/
+  # seed:
+  #   build: ./seed-data
+  #   profiles: ["seed"]
+  #   depends_on:
+  #     vote:
+  #       condition: service_healthy 
+  #   networks:
+  #     - front
+  #   restart: "no"
+
+volumes:
+  data:
+  dshm:
+
+networks:
+  front:
+  back:

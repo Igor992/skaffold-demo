@@ -1,0 +1,5 @@
+Flask
+Redis
+gunicorn
+# -- Added for debugging
+debugpy==1.8.12
