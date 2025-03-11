@@ -1,0 +1,14 @@
+apiVersion: v2
+name: voting-application
+# This version number should be incremented each time you make changes to the chart and its templates
+version: 0.1.0
+description: A Helm chart for voting application
+type: application
+keywords:
+  - Voting application
+maintainers:
+  - name: Igor Vojinovic
+    email: igor.vojinovic@cyberlab.rs
+# This should follow release tag from luther code
+appVersion: "1.0.0"
+deprecated: false

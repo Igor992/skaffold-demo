@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "database.fullname" . }}
+  labels:
+    {{- include "database.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  internalTrafficPolicy: {{ .Values.service.internalTrafficPolicy }}
+  ipFamilies:
+  {{- toYaml .Values.service.ipFamilies | nindent 4 }}
+  ipFamilyPolicy: {{ .Values.service.ipFamilyPolicy }}
+  ports:
+    - name: {{ include "database.fullname" . }}
+      port: {{ .Values.service.port }}
+      targetPort: http-{{ .Values.service.name }}
+      protocol: {{ .Values.service.protocol }}
+  selector:
+    {{- include "database.selectorLabels" . | nindent 4 }}

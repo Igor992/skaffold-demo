@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "database.fullname" . }}-test-connection"
+  labels:
+    {{- include "database.labels" . | nindent 4 }}
+  # https://helm.sh/docs/topics/charts_hooks/#hook-deletion-policies
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  containers:
+    - name: test-connection
+      image: busybox
+      command: ["/bin/sh"]
+      args: ["-c", "nc -zv {{ include "database.fullname" . }} 5432"]
+  restartPolicy: Never

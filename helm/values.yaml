@@ -1,0 +1,121 @@
+general:
+  registry: <registry>
+  replica: &replica
+    replicaCount: 1
+  resource: &resource
+    limits:
+      memory: 256M
+    requests:
+      cpu: 0.1
+      memory: 128M
+  env:
+  - name: POSTGRES_USER
+    value: &databaseUser postgres
+  - name: POSTGRES_PASSWORD # This is just for demo/development purpose!
+    value: &databasePass postgres
+  - name: POSTGRES_DB
+    value: &databaseName postgres
+  # - name: OPTION_A
+  #   value: &option_a DEV
+  # - name: OPTION_B
+  #   value: &option_b OPS
+
+database:
+  fullnameOverride: "db"
+  image:
+    repository: postgres
+    pullPolicy: IfNotPresent
+    tag: 15-alpine
+  env:
+  - name: POSTGRES_USER
+    value: *databaseUser
+  - name: POSTGRES_PASSWORD
+    value: *databasePass
+  - name: POSTGRES_DB
+    value: *databaseName
+  resources:
+    <<: *resource
+    limits:
+      memory: 1G
+  <<: *replica
+
+redis:
+  fullnameOverride: "redis"
+  image:
+    repository: redis
+    pullPolicy: IfNotPresent
+    tag: alpine
+  resources:
+    <<: *resource
+    limits:
+      memory: 1G
+  <<: *replica
+
+result:
+  nameOverride: "result"
+  image:
+    repository: <registry>/result
+    pullPolicy: Always
+    tag: latest
+  ingress:
+    enabled: true
+    className: nginx
+    # annotations:
+    #   kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: result.kind.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: demo-cert
+        hosts:
+          - dev-result.kind.local
+  resources:
+    <<: *resource
+    limits:
+      memory: 512M
+  <<: *replica
+
+vote:
+  nameOverride: "vote"
+  image:
+    repository: <registry>/vote
+    pullPolicy: Always
+    tag: latest
+  # env:
+  # - name: OPTION_A
+  #   value: *option_a
+  # - name: OPTION_B
+  #   value: *option_b
+  ingress:
+    enabled: true
+    className: nginx
+    # annotations:
+    #   kubernetes.io/ingress.class: nginx
+    hosts:
+      - host: vote.kind.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: demo-cert
+        hosts:
+          - dev-vote.kind.local
+  resources:
+    <<: *resource
+    limits:
+      memory: 512M
+  <<: *replica
+
+worker:
+  nameOverride: "worker"
+  image:
+    repository: <registry>/worker
+    pullPolicy: Always
+    tag: latest
+  resources:
+    <<: *resource
+    limits:
+      memory: 512M
+  <<: *replica

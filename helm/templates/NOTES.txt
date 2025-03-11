@@ -1,0 +1,36 @@
+Congratulations! 
+
+You installed {{ .Chart.Name }} chart successfully.
+Release name is {{ .Release.Name }}
+
+You can access the Voting application at the following URLs:
+
+{{- range .Values.vote.ingress.hosts }}
+  http://{{ $.Release.Name }}-{{ .host }}
+{{- end }}
+{{- range .Values.result.ingress.hosts }}
+  http://{{ $.Release.Name }}-{{ .host }}
+{{- end }}
+
+To learn more about the release, try:
+
+  helm status {{ $.Release.Name }} --namespace {{ $.Release.Namespace }}
+  helm get all {{ $.Release.Name }} --namespace {{ $.Release.Namespace }}
+
+To run dummy votes, try:
+
+  kubectl run seed-data --namespace {{ $.Release.Namespace }} --rm --tty -i --restart='Never' --image {{ .Values.general.registry }}/seed-data:latest
+
+To connect to the database, try:
+
+  kubectl port-forward --namespace {{ $.Release.Namespace }} svc/db 5432:5432
+
+Hint: You can install https://dbeaver.io and use this port-forward from above to connect to the database
+
+To connect to Redis, try:
+
+  kubectl port-forward --namespace {{ $.Release.Namespace }} svc/redis 6379:6379
+
+Hint: You can install via https://redis.io/docs/getting-started/installation/install-redis-on-mac-os
+
+Happy Helming!
