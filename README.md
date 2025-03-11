@@ -8,8 +8,8 @@
 
 > ## Notes
 > The voting application only accepts one vote per client browser.  
-It does not register additional votes if a vote has already been submitted by a client.
-> This is used only as show case for Skaffold remote development.
+It does not register additional votes if a vote has already been submitted by a client.  
+This is used only as show case for Skaffold remote development.
 
 ## Run the Vote Application via Skaffold
 
